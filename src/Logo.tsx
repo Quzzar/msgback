@@ -35,7 +35,7 @@ export default function Logo(props: { size?: number }) {
 
         <Image
           height={props.size || 18}
-          sx={{ }}
+          width={props.size || 18}
           fit="contain"
           src={LogoImg}
           alt="MsgBack"

@@ -135,48 +135,52 @@ export function HeaderResponsive() {
         <Logo size={28} />
 
         <Group>
-        <Group spacing={5} noWrap className={classes.links}>
-          {items}
-        </Group>
+          <Group spacing={5} noWrap className={classes.links}>
+            {items}
+          </Group>
 
-<Group spacing={7}>
-        <Box p={5}>
-          <Tooltip label="Create New Convo" withArrow>
-            <ActionIcon
-              color="dark"
-              radius="xl"
-              variant="subtle"
-              disabled={getConversations().length >= MAX_CONVERSATIONS}
-              onClick={() => {
-                const newConvo = {
-                  id: randomId(),
-                  name: "New Convo",
-                } satisfies Conversation;
-                setConversations([...getConversations(), newConvo]);
-                setActiveConversation(newConvo.id);
-                setActive(newConvo.id);
-              }}
+          <Group spacing={7}>
+            <Box p={5}>
+              <Tooltip label="Create New Convo" withArrow>
+                <ActionIcon
+                  color="dark"
+                  radius="xl"
+                  variant="subtle"
+                  disabled={getConversations().length >= MAX_CONVERSATIONS}
+                  onClick={() => {
+                    const newConvo = {
+                      id: randomId(),
+                      name: "New Convo",
+                    } satisfies Conversation;
+                    setConversations([...getConversations(), newConvo]);
+                    setActiveConversation(newConvo.id);
+                    setActive(newConvo.id);
+                  }}
+                >
+                  <IconUserPlus size="1.225rem" />
+                </ActionIcon>
+              </Tooltip>
+            </Box>
+
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              className={classes.burger}
+              size="sm"
+            />
+
+            <Transition
+              transition="pop-top-right"
+              duration={200}
+              mounted={opened}
             >
-              <IconUserPlus size="1.225rem" />
-            </ActionIcon>
-          </Tooltip>
-        </Box>
-
-        <Burger
-          opened={opened}
-          onClick={toggle}
-          className={classes.burger}
-          size="sm"
-        />
-
-        <Transition transition="pop-top-right" duration={200} mounted={opened}>
-          {(styles) => (
-            <Paper className={classes.dropdown} withBorder style={styles}>
-              {items}
-            </Paper>
-          )}
-        </Transition>
-        </Group>
+              {(styles) => (
+                <Paper className={classes.dropdown} withBorder style={styles}>
+                  {items}
+                </Paper>
+              )}
+            </Transition>
+          </Group>
         </Group>
       </Container>
     </Header>
