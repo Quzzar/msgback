@@ -1,4 +1,5 @@
 import { FollowUpType, Message } from ".";
+import { AI_FUNCTION_URL } from "./data";
 
 
 export function getFollowUpPrompt(type: FollowUpType, extraInstructions: string, convo: Message[]) {
@@ -48,3 +49,21 @@ export function getFollowUpPrompt(type: FollowUpType, extraInstructions: string,
 
 }
 
+
+export async function getAICompletion(content: string) {
+
+  const res = await fetch(AI_FUNCTION_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      content: content,
+      //model: "gpt-4",
+    }),
+  });
+  return res.ok
+    ? await res.text()
+    : "Too many requests, please try again later.";
+
+}

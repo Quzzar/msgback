@@ -1,7 +1,6 @@
 import { useRecoilValue } from "recoil";
 import {
   ActionIcon,
-  Box,
   Button,
   Center,
   Flex,
@@ -15,7 +14,6 @@ import {
   Stack,
   Tabs,
   Text,
-  TextInput,
   Textarea,
 } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
@@ -28,7 +26,6 @@ import {
   IconTrash,
   IconWriting,
 } from "@tabler/icons-react";
-import OpenAI from "openai";
 import {
   activeConvoState,
   deleteMessage,
@@ -40,8 +37,7 @@ import {
 import { randomId, useClipboard, useForceUpdate } from "@mantine/hooks";
 import { HEADER_HEIGHT } from "./HeaderResponsive";
 import { FollowUpType, Message } from ".";
-import { getOpenAIToken, setOpenAIToken } from "./atoms/tokenAtoms";
-import { getFollowUpPrompt } from "./gen-utils";
+import { getAICompletion, getFollowUpPrompt } from "./gen-utils";
 
 export default function MsgPage() {
   const forceUpdate = useForceUpdate();
@@ -54,7 +50,7 @@ export default function MsgPage() {
 
   const [newMessage, setNewMessage] = useState("");
 
-  const [followUpType, setFollowUpType] = useState<FollowUpType>('SMOOTH');
+  const [followUpType, setFollowUpType] = useState<FollowUpType>("SMOOTH");
 
   const [followUpInstructions, setFollowUpInstructions] = useState("");
   const [analyzeInstructions, setAnalyzeInstructions] = useState("");
@@ -77,16 +73,8 @@ export default function MsgPage() {
     setOpenedConvoAnalyze(true);
   };
 
-  const [formToken, setFormToken] = useState<string>("");
-  const [loadingAITest, setLoadingAITest] = useState(false);
-
-  const openAIToken = getOpenAIToken();
-  const openAI = useRef(
-    new OpenAI({
-      apiKey: openAIToken || "",
-      dangerouslyAllowBrowser: true,
-    })
-  );
+  // const [formToken, setFormToken] = useState<string>("");
+  // const [loadingAITest, setLoadingAITest] = useState(false);
 
   const generateFollowUp = async () => {
     setLoading(true);
@@ -99,17 +87,9 @@ export default function MsgPage() {
       convo.pop();
     }
 
-    const completion = await openAI.current.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: getFollowUpPrompt(followUpType, followUpInstructions, convo),
-        },
-      ],
-      model: "gpt-4",
-    });
-
-    let reply = completion.choices[0].message.content || "Error";
+    let reply = await getAICompletion(
+      getFollowUpPrompt(followUpType, followUpInstructions, convo)
+    );
     reply = reply
       .replace("Me: ", "")
       .replace("Them: ", "")
@@ -154,24 +134,14 @@ export default function MsgPage() {
       The message I just sent: ${message.text}
     `;
 
-    const completion = await openAI.current.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: `
-        ${prompt}
+    let analysis = await getAICompletion(`
+      ${prompt}
 
-        Here is our conversation so far:
-        ${convo
-          .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
-          .join("\n")}
-      `,
-        },
-      ],
-      model: "gpt-4",
-    });
-
-    let analysis = completion.choices[0].message.content || "Error";
+      Here is our conversation so far:
+      ${convo
+        .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
+        .join("\n")}
+    `);
     analysis = analysis
       .replace("Message Analysis:", "")
       .replace("Message analysis:", "")
@@ -185,25 +155,15 @@ export default function MsgPage() {
   const analyzeConversation = async () => {
     setOpenedConvoLoading(true);
 
-    const completion = await openAI.current.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: `
-        I'm talking to a person on a dating app. Please give me an analysis of our conversation. Is it a good conversation? What are some things I should be concerned about with this conversation. This conversation should be funny, interesting, and smooth. The end goal should be to build a connection and go on a date with them. Please keep the analysis short and concise, max 200 characters. Please format it in clean, easy-to-read way. Use they/them pronouns when referring to them.
-        Additional details: ${analyzeInstructions}
+    let analysis = await getAICompletion(`
+      I'm talking to a person on a dating app. Please give me an analysis of our conversation. Is it a good conversation? What are some things I should be concerned about with this conversation. This conversation should be funny, interesting, and smooth. The end goal should be to build a connection and go on a date with them. Please keep the analysis short and concise, max 200 characters. Please format it in clean, easy-to-read way. Use they/them pronouns when referring to them.
+      Additional details: ${analyzeInstructions}
 
-        Here is our conversation so far:
-        ${getMessages(activeConvoId)
-          .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
-          .join("\n")}
-      `,
-        },
-      ],
-      model: "gpt-4",
-    });
-
-    let analysis = completion.choices[0].message.content || "Error";
+      Here is our conversation so far:
+      ${getMessages(activeConvoId)
+        .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
+        .join("\n")}
+    `);
     analysis = analysis
       .replace("Conversation Analysis:", "")
       .replace("Conversation analysis:", "")
@@ -495,7 +455,7 @@ export default function MsgPage() {
         <Textarea value={openedConvoContent} readOnly autosize minRows={5} />
       </Modal>
 
-      <Modal
+      {/* <Modal
         opened={openAIToken === null}
         onClose={() => {}}
         title={
@@ -549,7 +509,7 @@ export default function MsgPage() {
             </Button>
           </Center>
         </Box>
-      </Modal>
+      </Modal> */}
     </>
   );
 }
