@@ -9,3 +9,5 @@ export interface Message {
   source: 'YOU' | 'THEM' | 'YOU-REPLY';
   text: string;
 }
+
+export type FollowUpType = 'SMOOTH' | 'DEEP' | 'FUNNY';

@@ -39,8 +39,9 @@ import {
 } from "./atoms/msgAtoms";
 import { randomId, useClipboard, useForceUpdate } from "@mantine/hooks";
 import { HEADER_HEIGHT } from "./HeaderResponsive";
-import { Message } from ".";
+import { FollowUpType, Message } from ".";
 import { getOpenAIToken, setOpenAIToken } from "./atoms/tokenAtoms";
+import { getFollowUpPrompt } from "./gen-utils";
 
 export default function MsgPage() {
   const forceUpdate = useForceUpdate();
@@ -52,6 +53,8 @@ export default function MsgPage() {
   const activeConvoId = useRecoilValue(activeConvoState);
 
   const [newMessage, setNewMessage] = useState("");
+
+  const [followUpType, setFollowUpType] = useState<FollowUpType>('SMOOTH');
 
   const [followUpInstructions, setFollowUpInstructions] = useState("");
   const [analyzeInstructions, setAnalyzeInstructions] = useState("");
@@ -80,30 +83,27 @@ export default function MsgPage() {
   const openAIToken = getOpenAIToken();
   const openAI = useRef(
     new OpenAI({
-      apiKey: openAIToken || '',
+      apiKey: openAIToken || "",
       dangerouslyAllowBrowser: true,
     })
   );
 
   const generateFollowUp = async () => {
     setLoading(true);
-    const convo = getMessages(activeConvoId).filter(
-      (msg) => msg.source !== "YOU-REPLY"
-    );
+    const convo = getMessages(activeConvoId);
+    // .filter(
+    //   (msg) => msg.source !== "YOU-REPLY"
+    // );
+    // If the last message has source "YOU-REPLY", remove it
+    if (convo.length > 0 && convo[convo.length - 1].source === "YOU-REPLY") {
+      convo.pop();
+    }
 
     const completion = await openAI.current.chat.completions.create({
       messages: [
         {
           role: "user",
-          content: `
-        I'm talking to a girl on a dating app. Please help me come up with a follow-up message to send her. This message should be short and consise, max 30 characters. Make it funny, interesting, and smooth. The message shouldn't be corny - don't try and play games. The end goal should be to build a connection and go on a date with her.
-        Additional details: ${followUpInstructions}
-
-        Here is our conversation so far:
-        ${convo
-          .map((msg) => `${msg.source === "YOU" ? "Me" : "Them"}: ${msg.text}`)
-          .join("\n")}
-      `,
+          content: getFollowUpPrompt(followUpType, followUpInstructions, convo),
         },
       ],
       model: "gpt-4",
@@ -163,7 +163,7 @@ export default function MsgPage() {
 
         Here is our conversation so far:
         ${convo
-          .map((msg) => `${msg.source === "YOU" ? "Me" : "Them"}: ${msg.text}`)
+          .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
           .join("\n")}
       `,
         },
@@ -195,7 +195,7 @@ export default function MsgPage() {
 
         Here is our conversation so far:
         ${getMessages(activeConvoId)
-          .map((msg) => `${msg.source === "YOU" ? "Me" : "Them"}: ${msg.text}`)
+          .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
           .join("\n")}
       `,
         },
@@ -431,15 +431,29 @@ export default function MsgPage() {
                 value={followUpInstructions}
                 onChange={(e) => setFollowUpInstructions(e.currentTarget.value)}
               />
-              <Button
-                mt="sm"
-                radius="xl"
-                size="xs"
-                onClick={generateFollowUp}
-                loading={loading}
-              >
-                Generate Follow-Up
-              </Button>
+              <Group pt="sm">
+                <SegmentedControl
+                  size="xs"
+                  value={followUpType}
+                  onChange={(value) => {
+                    setFollowUpType(value as FollowUpType);
+                  }}
+                  data={[
+                    { label: "Smooth", value: "SMOOTH" },
+                    { label: "Deep", value: "DEEP" },
+                    { label: "Funny", value: "FUNNY" },
+                  ]}
+                />
+                <Button
+                  radius="xl"
+                  size="xs"
+                  onClick={generateFollowUp}
+                  loading={loading}
+                  disabled={getMessages(activeConvoId).length === 0}
+                >
+                  Generate Follow-Up
+                </Button>
+              </Group>
             </Tabs.Panel>
 
             <Tabs.Panel value="analyze" pt="xs">
@@ -454,6 +468,7 @@ export default function MsgPage() {
                 size="xs"
                 onClick={openConvoAnalyze}
                 loading={loading}
+                disabled={getMessages(activeConvoId).length === 0}
               >
                 Analyze Conversation
               </Button>
@@ -511,18 +526,16 @@ export default function MsgPage() {
                 const testOpenAI = new OpenAI({
                   apiKey: formToken,
                   dangerouslyAllowBrowser: true,
-                })
-                const completion = await testOpenAI.chat.completions.create(
-                  {
-                    messages: [
-                      {
-                        role: "user",
-                        content: `Say hi.`,
-                      },
-                    ],
-                    model: "gpt-4",
-                  }
-                );
+                });
+                const completion = await testOpenAI.chat.completions.create({
+                  messages: [
+                    {
+                      role: "user",
+                      content: `Say hi.`,
+                    },
+                  ],
+                  model: "gpt-4",
+                });
                 if (completion) {
                   setOpenAIToken(formToken);
                   openAI.current = testOpenAI;
