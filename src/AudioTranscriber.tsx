@@ -13,7 +13,7 @@ import { randomId, useForceUpdate } from "@mantine/hooks";
 import { useRef, useState } from "react";
 import { Message } from ".";
 import { IconMicrophone, IconPlayerPlayFilled, IconPlayerStopFilled } from "@tabler/icons-react";
-import { getAIAudioTranscription } from "./gen-utils";
+import { capitalizeFirstLetter, getAIAudioTranscription } from "./gen-utils";
 
 export default function TranscribeAudio(props: {
   active: boolean;
@@ -74,13 +74,13 @@ export default function TranscribeAudio(props: {
       messages.push({
         id: randomId(),
         source: match[0].trim().toLowerCase().startsWith("me") ? "YOU" : "THEM",
-        text: match[1].trim(),
+        text: capitalizeFirstLetter(match[1].trim()),
       });
     }
 
     // Add messages to conversation
     props.onTranscription(messages);
-    //props.onClose();
+    props.onClose();
     setLoading(false);
   };
 

@@ -78,3 +78,7 @@ export async function getAIAudioTranscription(audioBlob: Blob) {
     ? await res.text()
     : "Too many requests, please try again later.";
 }
+
+export function capitalizeFirstLetter(text: string) {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
