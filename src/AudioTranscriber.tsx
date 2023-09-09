@@ -56,11 +56,6 @@ export default function TranscribeAudio(props: {
     recorder.current = undefined;
     audioChunks.current = [];
     forceUpdate();
-    
-    // Play audio
-    const audioUrl = URL.createObjectURL(audioBlob);
-    const audio = new Audio(audioUrl);
-    audio.play();
 
     // Transcribe audio
     const text = await getAIAudioTranscription(audioBlob);
