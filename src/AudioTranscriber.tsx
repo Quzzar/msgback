@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import {
   Modal,
   Box,
@@ -55,6 +56,14 @@ export default function TranscribeAudio(props: {
     recorder.current = undefined;
     audioChunks.current = [];
     forceUpdate();
+
+    const audioPlayer = document.getElementById('audioPlayer');
+    
+    const audioUrl = URL.createObjectURL(audioBlob);
+    // @ts-ignore
+    audioPlayer.src = audioUrl; // Set the audio source
+    // @ts-ignore
+    audioPlayer.play(); // Play the audio
 
     // Transcribe audio
     const text = await getAIAudioTranscription(audioBlob);
@@ -132,6 +141,7 @@ export default function TranscribeAudio(props: {
               Start Recording
             </Button>
           )}
+          <audio id="audioPlayer" controls></audio>
         </Center>
       </Box>
     </Modal>
