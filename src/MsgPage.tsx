@@ -15,6 +15,7 @@ import {
   Tabs,
   Text,
   Textarea,
+  Tooltip,
 } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -22,6 +23,7 @@ import {
   IconCopy,
   IconDots,
   IconMessageCirclePlus,
+  IconMicrophone,
   IconPencil,
   IconTrash,
   IconWriting,
@@ -38,6 +40,7 @@ import { randomId, useClipboard, useForceUpdate } from "@mantine/hooks";
 import { HEADER_HEIGHT } from "./HeaderResponsive";
 import { FollowUpType, Message } from ".";
 import { getAICompletion, getFollowUpPrompt } from "./gen-utils";
+import TranscribeAudio from "./AudioTranscriber";
 
 export default function MsgPage() {
   const forceUpdate = useForceUpdate();
@@ -73,6 +76,8 @@ export default function MsgPage() {
     setOpenedConvoAnalyze(true);
   };
 
+  const [audioTranscriberOpened, setAudioTranscriberOpened] = useState(false);
+
   // const [formToken, setFormToken] = useState<string>("");
   // const [loadingAITest, setLoadingAITest] = useState(false);
 
@@ -102,7 +107,7 @@ export default function MsgPage() {
       { id: randomId(), source: "YOU-REPLY", text: reply },
     ]);
     setLoading(false);
-    setTimeout(() => scrollToBottom(true), 0);
+    setTimeout(() => scrollToBottom(true), 100);
   };
 
   const analyzeMessage = async (messageId: string) => {
@@ -181,7 +186,7 @@ export default function MsgPage() {
     });
 
   useEffect(() => {
-    setTimeout(scrollToBottom, 0);
+    setTimeout(scrollToBottom, 100);
   }, []);
 
   return (
@@ -350,38 +355,50 @@ export default function MsgPage() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.currentTarget.value)}
               />
-              <Group pt="sm">
-                <SegmentedControl
-                  size="xs"
-                  value={getInputSource(activeConvoId)}
-                  onChange={(value) => {
-                    setInputSource(activeConvoId, value as "YOU" | "THEM");
-                    forceUpdate();
-                  }}
-                  data={[
-                    { label: "You", value: "YOU" },
-                    { label: "Them", value: "THEM" },
-                  ]}
-                />
-                <Button
-                  onClick={() => {
-                    setMessages(activeConvoId, [
-                      ...getMessages(activeConvoId),
-                      {
-                        id: randomId(),
-                        source: getInputSource(activeConvoId),
-                        text: newMessage,
-                      },
-                    ]);
-                    setNewMessage("");
-                    setTimeout(() => scrollToBottom(true), 0);
-                  }}
-                  disabled={newMessage === ""}
-                  radius="xl"
-                  size="xs"
-                >
-                  Add Message
-                </Button>
+              <Group pt="sm" position="apart">
+                <Group>
+                  <SegmentedControl
+                    size="xs"
+                    value={getInputSource(activeConvoId)}
+                    onChange={(value) => {
+                      setInputSource(activeConvoId, value as "YOU" | "THEM");
+                      forceUpdate();
+                    }}
+                    data={[
+                      { label: "You", value: "YOU" },
+                      { label: "Them", value: "THEM" },
+                    ]}
+                  />
+                  <Button
+                    onClick={() => {
+                      setMessages(activeConvoId, [
+                        ...getMessages(activeConvoId),
+                        {
+                          id: randomId(),
+                          source: getInputSource(activeConvoId),
+                          text: newMessage,
+                        },
+                      ]);
+                      setNewMessage("");
+                      setTimeout(() => scrollToBottom(true), 100);
+                    }}
+                    disabled={newMessage === ""}
+                    radius="xl"
+                    size="xs"
+                  >
+                    Add Message
+                  </Button>
+                </Group>
+                <Tooltip label="Insert Convo via Audio" withArrow>
+                  <ActionIcon
+                    radius="xl"
+                    onClick={() => {
+                      setAudioTranscriberOpened(true);
+                    }}
+                  >
+                    <IconMicrophone size="1.125rem" />
+                  </ActionIcon>
+                </Tooltip>
               </Group>
             </Tabs.Panel>
 
@@ -454,6 +471,20 @@ export default function MsgPage() {
         <LoadingOverlay visible={openedConvoLoading} />
         <Textarea value={openedConvoContent} readOnly autosize minRows={5} />
       </Modal>
+
+      <TranscribeAudio
+        active={audioTranscriberOpened}
+        onClose={() => {
+          setAudioTranscriberOpened(false);
+        }}
+        onTranscription={(messages) => {
+          setMessages(activeConvoId, [
+            ...getMessages(activeConvoId),
+            ...messages,
+          ]);
+          setTimeout(() => scrollToBottom(true), 100);
+        }}
+      />
 
       {/* <Modal
         opened={openAIToken === null}

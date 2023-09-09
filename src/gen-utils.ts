@@ -1,13 +1,15 @@
 import { FollowUpType, Message } from ".";
 import { AI_FUNCTION_URL } from "./data";
 
-
-export function getFollowUpPrompt(type: FollowUpType, extraInstructions: string, convo: Message[]) {
-
+export function getFollowUpPrompt(
+  type: FollowUpType,
+  extraInstructions: string,
+  convo: Message[]
+) {
   let p = `I'm talking to a girl on a dating app. Please help me come up with a follow-up message to send her. The message shouldn't be corny - don't try and play games. This conversation should be interesting and engaging. The end goal should be to build a connection and go on a date with her.`;
 
   if (type === "SMOOTH") {
-    p += `\nThis message should be short, smooth, and consise, max 60 characters.`
+    p += `\nThis message should be short, smooth, and consise, max 60 characters.`;
   } else if (type === "DEEP") {
     p += `\nI want to ask her a question that will make her think. This question should be short and consise, max 120 characters.
     
@@ -30,9 +32,9 @@ export function getFollowUpPrompt(type: FollowUpType, extraInstructions: string,
 
     Make sure the question is open-ended and not a yes/no question. The question should be related to the conversation we've been having so far.
 
-    `
+    `;
   } else if (type === "FUNNY") {
-    p += `\nMake a joke based on the context of the current conversation. Could be a stupid pun or some banter. No corny jokes. This message should be short and consise, max 60 characters.`
+    p += `\nMake a joke based on the context of the current conversation. Could be a stupid pun or some banter. No corny jokes. This message should be short and consise, max 60 characters.`;
   }
 
   if (extraInstructions) {
@@ -46,12 +48,9 @@ export function getFollowUpPrompt(type: FollowUpType, extraInstructions: string,
   `;
 
   return p;
-
 }
 
-
 export async function getAICompletion(content: string) {
-
   const res = await fetch(AI_FUNCTION_URL, {
     method: "POST",
     headers: {
@@ -65,5 +64,17 @@ export async function getAICompletion(content: string) {
   return res.ok
     ? await res.text()
     : "Too many requests, please try again later.";
+}
 
+export async function getAIAudioTranscription(audioBlob: Blob) {
+  const formData = new FormData();
+  formData.append("file", audioBlob, "audio.wav");
+  const res = await fetch(AI_FUNCTION_URL + "&model=whisper-1", {
+    method: "POST",
+    body: formData,
+  });
+
+  return res.ok
+    ? await res.text()
+    : "Too many requests, please try again later.";
 }
