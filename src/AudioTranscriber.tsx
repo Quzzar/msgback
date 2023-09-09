@@ -56,14 +56,11 @@ export default function TranscribeAudio(props: {
     recorder.current = undefined;
     audioChunks.current = [];
     forceUpdate();
-
-    const audioPlayer = document.getElementById('audioPlayer');
     
+    // Play audio
     const audioUrl = URL.createObjectURL(audioBlob);
-    // @ts-ignore
-    audioPlayer.src = audioUrl; // Set the audio source
-    // @ts-ignore
-    audioPlayer.play(); // Play the audio
+    const audio = new Audio(audioUrl);
+    audio.play();
 
     // Transcribe audio
     const text = await getAIAudioTranscription(audioBlob);
@@ -88,7 +85,7 @@ export default function TranscribeAudio(props: {
 
     // Add messages to conversation
     props.onTranscription(messages);
-    props.onClose();
+    //props.onClose();
     setLoading(false);
   };
 
@@ -141,7 +138,6 @@ export default function TranscribeAudio(props: {
               Start Recording
             </Button>
           )}
-          <audio id="audioPlayer" controls></audio>
         </Center>
       </Box>
     </Modal>
