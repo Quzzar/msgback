@@ -14,8 +14,6 @@ import { Message } from ".";
 import { IconMicrophone, IconPlayerPlayFilled, IconPlayerStopFilled } from "@tabler/icons-react";
 import { getAIAudioTranscription } from "./gen-utils";
 
-//const MAX_DURATION = 30; // seconds
-
 export default function TranscribeAudio(props: {
   active: boolean;
   onClose: () => void;
