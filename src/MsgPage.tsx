@@ -309,7 +309,7 @@ export default function MsgPage() {
                   {(index === 0 ||
                     getMessages(activeConvoId)[index - 1].source !==
                       msg.source) && (
-                    <Text fz="md" fw={600}>
+                    <Text fz="md" fw={500}>
                       {msg.source === "THEM"
                         ? "Them"
                         : msg.source === "YOU"

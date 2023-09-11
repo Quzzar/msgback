@@ -10,6 +10,8 @@ import {
   ActionIcon,
   Tooltip,
   Box,
+  Button,
+  Stack,
 } from "@mantine/core";
 import { randomId, useDisclosure } from "@mantine/hooks";
 import Logo from "./Logo";
@@ -19,9 +21,11 @@ import {
   setActiveConversation,
   setConversations,
 } from "./atoms/msgAtoms";
-import { IconUserPlus } from "@tabler/icons-react";
+import { IconSettings, IconUserPlus } from "@tabler/icons-react";
 import { Conversation } from ".";
 import { useRecoilState } from "recoil";
+import { useState } from "react";
+import ConvoEditModal from "./ConvoEditModal";
 
 export const HEADER_HEIGHT = rem(60);
 export const MAX_CONVERSATIONS = 5;
@@ -102,6 +106,7 @@ const useStyles = createStyles((theme) => ({
       color: theme.fn.variant({ variant: "light", color: theme.primaryColor })
         .color,
     },
+    paddingRight: 5,
   },
 }));
 
@@ -109,24 +114,64 @@ export function HeaderResponsive() {
   const [opened, { toggle, close }] = useDisclosure(false);
   const [active, setActive] = useRecoilState(activeConvoState);
 
+  const [editOpened, setEditOpened] = useState(false);
+
   const { classes, cx } = useStyles();
 
   const items = getConversations().map((convo) => (
-    <a
-      key={convo.id}
-      href={"/" + convo.id}
-      className={cx(classes.link, {
-        [classes.linkActive]: active === convo.id,
-      })}
-      onClick={(event) => {
-        event.preventDefault();
-        setActive(convo.id);
-        setActiveConversation(convo.id);
-        close();
-      }}
-    >
-      {convo.name}
-    </a>
+    // <a
+    //   key={convo.id}
+    //   href={"/" + convo.id}
+    //   className={cx(classes.link, {
+    //     [classes.linkActive]: active === convo.id,
+    //   })}
+    //   onClick={(event) => {
+    //     event.preventDefault();
+    //     setActive(convo.id);
+    //     setActiveConversation(convo.id);
+    //     close();
+    //   }}
+    // >
+    //   {convo.name}
+    // </a>
+    <Button.Group>
+      <Button
+        className={cx(classes.link, {
+          [classes.linkActive]: active === convo.id,
+        })}
+        styles={{
+          label: {
+            height: 'initial',
+          }
+        }}
+        variant="subtle"
+        onClick={(event) => {
+          event.preventDefault();
+          setActive(convo.id);
+          setActiveConversation(convo.id);
+          close();
+        }}
+      >
+        {convo.name}
+      </Button>
+      {active === convo.id && (
+        <Button
+          variant="light"
+          px={10}
+          radius='md'
+          styles={{
+            label: {
+              height: 'initial',
+            }
+          }}
+          onClick={() => {
+            setEditOpened(true);
+          }}
+        >
+          <IconSettings size="1.0rem" />
+        </Button>
+      )}
+    </Button.Group>
   ));
 
   return (
@@ -175,14 +220,17 @@ export function HeaderResponsive() {
               mounted={opened}
             >
               {(styles) => (
-                <Paper className={classes.dropdown} withBorder style={styles}>
+                <Paper className={classes.dropdown} withBorder style={styles} py={10}>
+                  <Stack align="flex-end" spacing={5}>
                   {items}
+                  </Stack>
                 </Paper>
               )}
             </Transition>
           </Group>
         </Group>
       </Container>
+      <ConvoEditModal opened={editOpened} close={() => setEditOpened(false)} convo={getConversations().find((convo) => convo.id === active)} />
     </Header>
   );
 }
