@@ -1,6 +1,7 @@
 import { useRecoilValue } from "recoil";
 import {
   ActionIcon,
+  Box,
   Button,
   Center,
   Flex,
@@ -50,6 +51,7 @@ export default function MsgPage() {
   const viewport = useRef<HTMLDivElement>(null);
 
   const activeConvoId = useRecoilValue(activeConvoState);
+  const [editMessage, setEditMessage] = useState<Message>();
 
   const [newMessage, setNewMessage] = useState("");
 
@@ -286,7 +288,12 @@ export default function MsgPage() {
                       >
                         Copy
                       </Menu.Item>
-                      <Menu.Item icon={<IconPencil size={14} />}>
+                      <Menu.Item
+                        icon={<IconPencil size={14} />}
+                        onClick={() => {
+                          setEditMessage(msg);
+                        }}
+                      >
                         Edit
                       </Menu.Item>
 
@@ -317,8 +324,43 @@ export default function MsgPage() {
                         : "You (AI)"}
                     </Text>
                   )}
-
-                  <Text fz="sm">{msg.text}</Text>
+                  {editMessage?.id === msg.id ? (
+                    <Box>
+                      <Box sx={{
+                        position: 'absolute',
+                        top: '1.8rem',
+                        right: '0.7rem',
+                      }}><IconPencil size={12} /></Box>
+                    <Textarea
+                      placeholder="Message"
+                      variant="unstyled"
+                      autosize
+                      defaultValue={editMessage.text}
+                      onChange={(event) =>
+                        (editMessage.text = event.currentTarget.value)
+                      }
+                      styles={{
+                        input: {
+                          padding: '0px!important',
+                        }
+                      }}
+                      onBlur={() => {
+                        const messages = getMessages(activeConvoId).map((m) => {
+                          if (m.id === editMessage!.id) {
+                            return editMessage!;
+                          }
+                          return m;
+                        });
+                        setMessages(activeConvoId, messages);
+                        setEditMessage(undefined);
+                      }}
+                    />
+                    </Box>
+                  ) : (
+                    <Text fz="sm" sx={{
+                      whiteSpace: 'pre-line',
+                    }}>{msg.text}</Text>
+                  )}
                 </Paper>
               </Group>
             ))}
