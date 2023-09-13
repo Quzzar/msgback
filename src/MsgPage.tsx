@@ -26,6 +26,7 @@ import {
   IconMessageCirclePlus,
   IconMicrophone,
   IconPencil,
+  IconShare3,
   IconTrash,
   IconWriting,
 } from "@tabler/icons-react";
@@ -49,6 +50,8 @@ export default function MsgPage() {
 
   const [loading, setLoading] = useState(false);
   const viewport = useRef<HTMLDivElement>(null);
+
+  const [activeTab, setActiveTab] = useState<string | null>('add');
 
   const activeConvoId = useRecoilValue(activeConvoState);
   const [editMessage, setEditMessage] = useState<Message>();
@@ -326,40 +329,51 @@ export default function MsgPage() {
                   )}
                   {editMessage?.id === msg.id ? (
                     <Box>
-                      <Box sx={{
-                        position: 'absolute',
-                        top: '1.8rem',
-                        right: '0.7rem',
-                      }}><IconPencil size={12} /></Box>
-                    <Textarea
-                      placeholder="Message"
-                      variant="unstyled"
-                      autosize
-                      defaultValue={editMessage.text}
-                      onChange={(event) =>
-                        (editMessage.text = event.currentTarget.value)
-                      }
-                      styles={{
-                        input: {
-                          padding: '0px!important',
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: "1.8rem",
+                          right: "0.7rem",
+                        }}
+                      >
+                        <IconPencil size={12} />
+                      </Box>
+                      <Textarea
+                        placeholder="Message"
+                        variant="unstyled"
+                        autosize
+                        defaultValue={editMessage.text}
+                        onChange={(event) =>
+                          (editMessage.text = event.currentTarget.value)
                         }
-                      }}
-                      onBlur={() => {
-                        const messages = getMessages(activeConvoId).map((m) => {
-                          if (m.id === editMessage!.id) {
-                            return editMessage!;
-                          }
-                          return m;
-                        });
-                        setMessages(activeConvoId, messages);
-                        setEditMessage(undefined);
-                      }}
-                    />
+                        styles={{
+                          input: {
+                            padding: "0px!important",
+                          },
+                        }}
+                        onBlur={() => {
+                          const messages = getMessages(activeConvoId).map(
+                            (m) => {
+                              if (m.id === editMessage!.id) {
+                                return editMessage!;
+                              }
+                              return m;
+                            }
+                          );
+                          setMessages(activeConvoId, messages);
+                          setEditMessage(undefined);
+                        }}
+                      />
                     </Box>
                   ) : (
-                    <Text fz="sm" sx={{
-                      whiteSpace: 'pre-line',
-                    }}>{msg.text}</Text>
+                    <Text
+                      fz="sm"
+                      sx={{
+                        whiteSpace: "pre-line",
+                      }}
+                    >
+                      {msg.text}
+                    </Text>
                   )}
                 </Paper>
               </Group>
@@ -375,7 +389,7 @@ export default function MsgPage() {
         </ScrollArea>
 
         <Paper p="xs" radius="md" h="11rem" withBorder>
-          <Tabs defaultValue="add">
+          <Tabs value={activeTab} onTabChange={setActiveTab}>
             <Tabs.List>
               <Tabs.Tab
                 value="add"
@@ -507,11 +521,28 @@ export default function MsgPage() {
       <Modal
         opened={openedConvoAnalyze}
         onClose={() => setOpenedConvoAnalyze(false)}
-        title="Conversation Analysis"
+        title={<Text fz="lg" fw={500}>Conversation Analysis</Text>}
         sx={{ position: "relative" }}
       >
         <LoadingOverlay visible={openedConvoLoading} />
         <Textarea value={openedConvoContent} readOnly autosize minRows={5} />
+        <Center pt={5}>
+        {!openedConvoLoading && (
+          <Button
+            variant="subtle"
+            rightIcon={<IconShare3 size="0.9rem" stroke={2} />}
+            size="xs"
+            compact
+            onClick={() => {
+              setFollowUpInstructions(openedConvoContent);
+              setActiveTab('generate');
+              setOpenedConvoAnalyze(false);
+            }}
+          >
+            Set as Generate Instructions
+          </Button>
+        )}
+        </Center>
       </Modal>
 
       <TranscribeAudio
