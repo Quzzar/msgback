@@ -105,7 +105,7 @@ export default function MsgPage() {
         .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
         .join("\n")}
     `);
-    if(convoName === 'No term') { return; }
+    if(convoName.toLowerCase().includes('no term')) { return; }
     convo.name = convoName;
     setConversations(getConversations().map((c) => c.id === activeConvoId ? convo : c));
     location.reload();
