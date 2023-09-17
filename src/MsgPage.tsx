@@ -33,8 +33,10 @@ import {
 import {
   activeConvoState,
   deleteMessage,
+  getConversations,
   getInputSource,
   getMessages,
+  setConversations,
   setInputSource,
   setMessages,
 } from "./atoms/msgAtoms";
@@ -85,6 +87,30 @@ export default function MsgPage() {
 
   // const [formToken, setFormToken] = useState<string>("");
   // const [loadingAITest, setLoadingAITest] = useState(false);
+
+  const determineConvoName = async () => {
+
+    const convo = getConversations().find((c) => c.id === activeConvoId);
+    if(!convo || convo.name !== 'New Convo') { return; }
+
+    const msgs = getMessages(activeConvoId);
+    if(msgs.length < 4) { return; }
+
+    const convoName = await getAICompletion(`
+      Please determine a short term for the person I'm talking to. It could be their name, a nickname, or something else. Please keep it short, max 20 characters.
+      If there's no good term that's really fitting, just say "No term".
+
+      Here is our conversation so far:
+      ${getMessages(activeConvoId)
+        .map((msg) => `${msg.source === "THEM" ? "Them" : "Me"}: ${msg.text}`)
+        .join("\n")}
+    `);
+    if(convoName === 'No term') { return; }
+    convo.name = convoName;
+    setConversations(getConversations().map((c) => c.id === activeConvoId ? convo : c));
+    location.reload();
+
+  }
 
   const generateFollowUp = async () => {
     setLoading(true);
@@ -435,6 +461,7 @@ export default function MsgPage() {
                           text: newMessage,
                         },
                       ]);
+                      determineConvoName();
                       setNewMessage("");
                       setTimeout(() => scrollToBottom(true), 100);
                     }}
@@ -555,6 +582,7 @@ export default function MsgPage() {
             ...getMessages(activeConvoId),
             ...messages,
           ]);
+          determineConvoName();
           setTimeout(() => scrollToBottom(true), 100);
         }}
       />
